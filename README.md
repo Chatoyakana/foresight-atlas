@@ -66,7 +66,7 @@ Duplica `content.*.ts` y `ui.*.ts`, tradúcelos y regístralos en `languages` (e
 
 ### Notas de traducción
 
-Los nombres de autores nunca se traducen. Los títulos de publicaciones se mantienen en su idioma original, porque son citas. Los nombres de conceptos y métodos sí se traducen, y la búsqueda indexa los nombres de **todos** los idiomas: alguien leyendo el atlas en español encuentra igual un nodo escribiendo el término en inglés que ya conoce.
+Los nombres de autores nunca se traducen. Los títulos de publicaciones se mantienen en su idioma original, porque son citas. Los nombres de metodologías ampliamente reconocidas por su denominación en inglés —**Wild Cards**, **Backcasting**, **Horizon Scanning**— también se dejan sin traducir, porque así las nombran quienes las practican en español y portugués. Los términos con traducción asentada sí se traducen: Análisis Causal por Capas, Planificación por Escenarios, Tres Horizontes. Los nombres de conceptos y métodos sí se traducen, y la búsqueda indexa los nombres de **todos** los idiomas: alguien leyendo el atlas en español encuentra igual un nodo escribiendo el término en inglés que ya conoce.
 
 ## Nota editorial
 
