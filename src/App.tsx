@@ -27,7 +27,18 @@ function BrandMark() {
   return <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><g stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><path d="M20 3v9m0 16v9M3 20h9m16 0h9M8 8l6.3 6.3m11.4 11.4L32 32M8 32l6.3-6.3m11.4-11.4L32 8" /></g><circle cx="20" cy="20" r="4" fill="currentColor" /><circle cx="20" cy="20" r="10" stroke="currentColor" strokeWidth="1.1" opacity=".35" /></svg>;
 }
 
-function downloadFile(content: string, name: string, type: string) {
+// Some embedded hosts block anchor-driven downloads and mediate saves through
+// their own confirmation instead. Use that route when it is offered.
+interface SandboxHost { use?: (name: string) => Promise<{ save: (file: { filename: string; data: string }) => Promise<unknown> } | null> }
+
+async function downloadFile(content: string, name: string, type: string) {
+  const host = (window as unknown as { claude?: SandboxHost }).claude;
+  if (host?.use) {
+    try {
+      const downloads = await host.use('downloads');
+      if (downloads) { await downloads.save({ filename: name, data: content }); return true; }
+    } catch { return false; }
+  }
   const url = URL.createObjectURL(new Blob([content], { type }));
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -36,6 +47,7 @@ function downloadFile(content: string, name: string, type: string) {
   anchor.click();
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
 }
 
 export default function App() {
@@ -195,13 +207,14 @@ export default function App() {
     setCollections((current) => [...current, { id, name, nodeIds: [] }]);
     setModal(null); navigate('collection', id); notify(`Your collection "${name}" is ready to explore.`);
   }
-  function exportGraph() {
+  async function exportGraph() {
+    let delivered = false;
     if (exportFormat === 'svg' && svgRef.current) {
       const clone = svgRef.current.cloneNode(true) as SVGSVGElement;
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       clone.setAttribute('width', '1440'); clone.setAttribute('height', '1035');
       clone.querySelectorAll('[tabindex]').forEach((element) => element.removeAttribute('tabindex'));
-      downloadFile(new XMLSerializer().serializeToString(clone), 'foresight-atlas.svg', 'image/svg+xml');
+      delivered = await downloadFile(new XMLSerializer().serializeToString(clone), 'foresight-atlas.svg', 'image/svg+xml');
     } else {
       const data = {
         title: 'The Foresight Atlas', exportedAt: new Date().toISOString(),
@@ -213,9 +226,10 @@ export default function App() {
           reference: edge.reference || (nodeById.get(edge.source)?.type === 'author' ? nodeById.get(edge.source)?.source : null),
         })),
       };
-      downloadFile(JSON.stringify(data, null, 2), 'foresight-atlas.json', 'application/json');
+      delivered = await downloadFile(JSON.stringify(data, null, 2), 'foresight-atlas.json', 'application/json');
     }
-    setModal(null); notify('Your atlas export is ready. Check your downloads.');
+    setModal(null);
+    if (delivered) notify('Your atlas export is ready. Check your downloads.');
   }
 
   const heading = page === 'graph' ? 'Foresight, connected.' : page === 'authors' ? 'Meet the minds.' : page === 'concepts' ? 'Ideas for what comes next.' : page === 'reading' ? 'Your next chapter.' : collection.name;
