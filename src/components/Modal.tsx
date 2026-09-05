@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface ModalProps {
   title: string;
@@ -11,6 +12,7 @@ interface ModalProps {
 }
 
 export default function Modal({ title, description, onClose, children, wide = false }: ModalProps) {
+  const { ui } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function Modal({ title, description, onClose, children, wide = fa
         }}>
         <div className="modal-heading">
           <div><h2 id="modal-title">{title}</h2>{description && <p>{description}</p>}</div>
-          <button className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={19} /></button>
+          <button className="icon-button" aria-label={ui.detail.close} onClick={onClose}><X size={19} /></button>
         </div>
         {children}
       </motion.div>

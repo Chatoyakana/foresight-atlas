@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Maximize2, Minimize2, Minus, Network, Plus, Scan, X } from 'lucide-react';
-import { palette, typeLabels, type AtlasEdge, type AtlasNode } from '../data/atlas';
+import { palette, type AtlasEdge, type AtlasNode } from '../data/atlas';
+import { useI18n } from '../i18n';
 
 export interface GraphSettings {
   labels: boolean;
@@ -52,6 +53,7 @@ function curve(a: Point, b: Point, index: number) {
 }
 
 export default function Graph({ nodes, edges, selectedId, onSelect, focusId, onClearFocus, settings, svgRef, onReset, expanded, onExpand }: GraphProps) {
+  const { ui, typeLabels, typePlurals } = useI18n();
   const [view, setView] = useState<View>(initialView);
   const [positions, setPositions] = useState<Record<string, Point>>({});
   const [hovered, setHovered] = useState<string | null>(null);
@@ -129,13 +131,13 @@ export default function Graph({ nodes, edges, selectedId, onSelect, focusId, onC
 
   return (
     <div className={`graph-canvas ${dragging ? 'is-dragging' : ''}`}>
-      <div className="graph-legend" aria-label="Graph legend">
-        {(['author', 'concept', 'method'] as const).map((type) => <span key={type}><i style={{ background: palette[type].fill, borderColor: palette[type].stroke }} />{typeLabels[type]}s</span>)}
+      <div className="graph-legend" aria-label={ui.graph.legend}>
+        {(['author', 'concept', 'method'] as const).map((type) => <span key={type}><i style={{ background: palette[type].fill, borderColor: palette[type].stroke }} />{typePlurals[type]}</span>)}
       </div>
-      {focusNode && <div className="focus-context"><span>Exploring <strong>{focusNode.name}</strong></span><button className="icon-button" onClick={onClearFocus} aria-label="Return to the full graph"><X size={14} /></button></div>}
+      {focusNode && <div className="focus-context"><span>{ui.graph.exploring} <strong>{focusNode.name}</strong></span><button className="icon-button" onClick={onClearFocus} aria-label={ui.graph.returnToGraph}><X size={14} /></button></div>}
 
-      <p id="graph-instructions" className="sr-only">Select a node to explore its profile. Use plus and minus to zoom, arrow keys to pan, and zero to fit the graph. On a touchscreen, drag to pan or pinch to zoom. A list view is also available.</p>
-      <svg ref={svgRef} className="network-svg" viewBox={`0 0 ${W} ${H}`} tabIndex={0} role="group" aria-describedby="graph-instructions" aria-label="Interactive knowledge graph of foresight authors, concepts, and methods"
+      <p id="graph-instructions" className="sr-only">{ui.graph.instructions}</p>
+      <svg ref={svgRef} className="network-svg" viewBox={`0 0 ${W} ${H}`} tabIndex={0} role="group" aria-describedby="graph-instructions" aria-label={ui.graph.ariaLabel}
         onKeyDown={(event) => {
           if (event.key === '+' || event.key === '=') { event.preventDefault(); zoom(0.15); }
           if (event.key === '-') { event.preventDefault(); zoom(-0.15); }
@@ -234,7 +236,7 @@ export default function Graph({ nodes, edges, selectedId, onSelect, focusId, onC
             const dimmed = settings.highlight && activeId && connected.size > 1 && !connected.has(node.id);
             return <motion.g key={node.id} transform={`translate(${point.x} ${point.y})`} className={`graph-node ${selected ? 'selected' : ''}`} data-node={node.id}
               initial={{ opacity: 0 }} animate={{ opacity: dimmed ? 0.73 : 1 }} transition={{ duration: reduceMotion ? 0 : 0.3, delay: reduceMotion ? 0 : index * 0.009 }}
-              role="button" tabIndex={0} aria-label={`${node.name}, ${typeLabels[node.type]}. Explore connections.`} aria-pressed={selected}
+              role="button" tabIndex={0} aria-label={`${node.name}, ${typeLabels[node.type]}. ${ui.graph.nodeHint}`} aria-pressed={selected}
               onMouseEnter={() => setHovered(node.id)} onMouseLeave={() => setHovered(null)}
               onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(node); } }}>
               <title>{node.name}: {node.subtitle}</title>
@@ -259,15 +261,15 @@ export default function Graph({ nodes, edges, selectedId, onSelect, focusId, onC
         </g>
       </svg>
 
-      {nodes.length === 0 && <div className="graph-empty"><Network size={35} strokeWidth={1.2} /><h3>No paths here just yet.</h3><p>Try another search or give your filters a little room.</p><button className="button button-secondary" onClick={onReset}>Reset filters</button></div>}
+      {nodes.length === 0 && <div className="graph-empty"><Network size={35} strokeWidth={1.2} /><h3>{ui.graph.emptyTitle}</h3><p>{ui.graph.emptyBody}</p><button className="button button-secondary" onClick={onReset}>{ui.actions.resetFilters}</button></div>}
 
       <div className="graph-controls">
-        <div className="zoom-controls"><button aria-label="Zoom out" onClick={() => zoom(-0.15)} disabled={view.k <= 0.45}><Minus size={16} /></button><button className="zoom-value" onClick={resetView} title="Reset zoom">{Math.round(view.k * 100)}%</button><button aria-label="Zoom in" onClick={() => zoom(0.15)} disabled={view.k >= 2.6}><Plus size={16} /></button></div>
-        <button className="graph-control-button" aria-label="Fit graph to view" title="Fit to view" onClick={resetView}><Scan size={17} /></button>
-        <button className="graph-control-button" aria-label={expanded ? 'Exit expanded view' : 'Expand graph'} title={expanded ? 'Exit expanded view' : 'Expand graph'} onClick={onExpand}>{expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}</button>
+        <div className="zoom-controls"><button aria-label={ui.graph.zoomOut} onClick={() => zoom(-0.15)} disabled={view.k <= 0.45}><Minus size={16} /></button><button className="zoom-value" onClick={resetView} title={ui.graph.resetZoom}>{Math.round(view.k * 100)}%</button><button aria-label={ui.graph.zoomIn} onClick={() => zoom(0.15)} disabled={view.k >= 2.6}><Plus size={16} /></button></div>
+        <button className="graph-control-button" aria-label={ui.graph.fitToView} title={ui.graph.fitToView} onClick={resetView}><Scan size={17} /></button>
+        <button className="graph-control-button" aria-label={expanded ? ui.graph.exitExpand : ui.graph.expand} title={expanded ? ui.graph.exitExpand : ui.graph.expand} onClick={onExpand}>{expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}</button>
       </div>
-      <span className="graph-gesture-hint">Drag to explore <i /> Scroll to zoom</span>
-      <button className="minimap" aria-label="Graph minimap. Click a location to center the view." title="Click to navigate the graph" onClick={(event) => {
+      <span className="graph-gesture-hint">{ui.graph.gestureDrag} <i /> {ui.graph.gestureZoom}</span>
+      <button className="minimap" aria-label={ui.graph.minimap} title={ui.graph.minimap} onClick={(event) => {
         if (event.detail === 0) { resetView(); return; }
         const mini = event.currentTarget.querySelector('svg');
         const matrix = mini?.getScreenCTM();

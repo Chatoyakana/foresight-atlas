@@ -2,9 +2,12 @@
 
 Un grafo de conocimiento interactivo que conecta autores, conceptos y métodos de los estudios de futuros. Permite seguir un hilo entre ideas, leer el perfil de cada nodo, guardar hallazgos en colecciones y exportar la vista actual.
 
+**Trilingüe:** español (por defecto), inglés y portugués, con selector en la barra superior.
+
 ## Qué incluye
 
 - **36 nodos y 62 conexiones** curados a mano: 14 autores, 22 conceptos y métodos.
+- **Tres idiomas completos**: interfaz, nombres de conceptos, descripciones, preguntas y etiquetas de relación. La elección se recuerda en el navegador y actualiza el atributo `lang` del documento.
 - **Grafo SVG interactivo** con zoom, paneo, arrastre de nodos, minimapa y vista enfocada sobre un nodo y sus vecinos.
 - **Vista de lista** ordenable por nombre o por número de conexiones.
 - **Filtros** por tipo (autor / concepto / método) y por escuela de pensamiento, más búsqueda con sugerencias (`/` o `Cmd+K`).
@@ -38,11 +41,32 @@ src/
     DetailPanel.tsx       perfil del nodo seleccionado y sus conexiones
     Modal.tsx             diálogo accesible con foco atrapado
     NodeMark.tsx          marca visual por tipo de nodo
-  data/atlas.ts           nodos, relaciones, escuelas y helpers del grafo
+  data/atlas.ts           estructura: ids, posiciones, tipos y enlaces
+  i18n/
+    index.tsx             contexto de idioma y ensamblado del atlas
+    types.ts              forma de los diccionarios
+    content.{es,en,pt}.ts texto del atlas: nombres, descripciones, relaciones
+    ui.{es,en,pt}.ts      texto de la interfaz
   index.css               sistema de estilos
 ```
 
-Todo el contenido del atlas vive en [`src/data/atlas.ts`](src/data/atlas.ts). Para añadir un autor, concepto o método basta con agregar un objeto a `nodes` y sus relaciones a `edges`.
+La **estructura** del grafo y su **texto** están separados a propósito: [`src/data/atlas.ts`](src/data/atlas.ts) no contiene ni una cadena legible, solo ids, coordenadas, tipos y aristas. Todo lo que se lee vive en `src/i18n/`, indexado por esos mismos ids.
+
+### Añadir un nodo
+
+1. Agrega su forma a `nodeShapes` en [`src/data/atlas.ts`](src/data/atlas.ts) (id, tipo, escuela, posición, radio, año y URL de la publicación).
+2. Agrega sus aristas a `edges`, usando una `relation` de las ya definidas en `relationKeys`.
+3. Agrega su texto con el mismo id en los tres archivos `content.*.ts`.
+
+TypeScript exige el paso 3: si falta el id en algún idioma, la compilación falla. No se puede publicar un nodo a medio traducir.
+
+### Añadir un idioma
+
+Duplica `content.*.ts` y `ui.*.ts`, tradúcelos y regístralos en `languages` (en `types.ts`) y en los mapas de `i18n/index.tsx`. No hay que tocar ningún componente.
+
+### Notas de traducción
+
+Los nombres de autores nunca se traducen. Los títulos de publicaciones se mantienen en su idioma original, porque son citas. Los nombres de conceptos y métodos sí se traducen, y la búsqueda indexa los nombres de **todos** los idiomas: alguien leyendo el atlas en español encuentra igual un nodo escribiendo el término en inglés que ya conoce.
 
 ## Nota editorial
 
